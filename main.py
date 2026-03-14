@@ -251,14 +251,19 @@ def send_email(subject, body, attachment_path=None):
         return False
 
 if __name__ == "__main__":
+    is_debug = "--debug" in sys.argv
+    
     is_open, today_str = check_market_open()
     
     if not is_open:
         print("휴장일이므로 프로세스를 종료합니다. (필요시 알림 메일 발송 로직 추가)")
-        send_email(
-            subject=f"[{today_str}] 미국 증시 휴장 안내",
-            body="오늘 미국 증시는 휴장입니다. 시황 보고서가 발행되지 않습니다."
-        )
+        if not is_debug:
+            send_email(
+                subject=f"[{today_str}] 미국 증시 휴장 안내",
+                body="오늘 미국 증시는 휴장입니다. 시황 보고서가 발행되지 않습니다."
+            )
+        else:
+            print("[DEBUG] 휴장일 알림 메일 발송 생략")
         sys.exit(0)
         
     print("시장 데이터 수집 중...")
@@ -269,6 +274,21 @@ if __name__ == "__main__":
     
     print("\n시황 보고서 생성 중 (Gemini)...")
     report_md = generate_report(market_data, news_data, today_str)
+    
+    if is_debug:
+        print("\n" + "="*50)
+        print("[DEBUG] 생성된 리포트 (Markdown)")
+        print("="*50)
+        print(report_md)
+        print("="*50)
+        
+        # 파일로도 저장해서 편하게 볼 수 있게 함
+        debug_filename = f"debug_report_{today_str}.md"
+        with open(debug_filename, "w", encoding="utf-8") as f:
+            f.write(report_md)
+        print(f"\n[DEBUG] 리포트를 {debug_filename} 파일로 저장했습니다.")
+        print("[DEBUG] 디버그 모드이므로 PDF 변환 및 이메일 발송 작업을 생략하고 마칩니다.")
+        sys.exit(0)
     
     print("\nPDF 생성 중...")
     pdf_filename = f"report_{today_str}.pdf"
