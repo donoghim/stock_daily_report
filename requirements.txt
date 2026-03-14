@@ -1,4 +1,4 @@
-google-generativeai
+google-genai
 yfinance
 feedparser
 pandas_market_calendars

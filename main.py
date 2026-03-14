@@ -5,7 +5,7 @@ import yfinance as yf
 import feedparser
 import pandas_market_calendars as mcal
 import pytz
-import google.generativeai as genai
+from google import genai
 import markdown
 import pdfkit
 import smtplib
@@ -120,10 +120,8 @@ def generate_report(market_data, news_data, today_str):
         print("GEMINI_API_KEY 환경변수가 설정되지 않았습니다.")
         return "보고서 생성 실패: API 키 누락"
         
-    genai.configure(api_key=api_key)
-    
-    # 모델 설정 (최신 gemini-1.5-pro 사용)
-    model = genai.GenerativeModel('gemini-1.5-pro')
+    # 구글 최신 라이브러리 (google-genai) 클라이언트 생성
+    client = genai.Client(api_key=api_key)
     
     # 프롬프트 구성
     market_text = "\n".join([f"- {k}: {v}" for k, v in market_data.items()])
@@ -161,7 +159,10 @@ def generate_report(market_data, news_data, today_str):
     """
     
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
         return response.text
     except Exception as e:
         print(f"제미나이 API 호출 중 에러 발생: {e}")
