@@ -1,0 +1,7 @@
+google-generativeai
+yfinance
+feedparser
+pandas_market_calendars
+markdown
+pdfkit
+pytz
