@@ -62,7 +62,13 @@ def fetch_market_data():
         '나스닥': '^IXIC',
         '10년물 국채': '^TNX',
         '금': 'GC=F',
-        '원/달러 환율': 'KRW=X'
+        '원/달러 환율': 'KRW=X',
+        '필라델피아 반도체': '^SOX',
+        '엔비디아': 'NVDA',
+        '테슬라': 'TSLA',
+        '애플': 'AAPL',
+        '삼성전자(KR)': '005930.KS',
+        'SK하이닉스(KR)': '000660.KS'
     }
     
     data_summary = {}
@@ -80,6 +86,8 @@ def fetch_market_data():
                 # 포맷팅
                 if name in ['10년물 국채', '원/달러 환율']:
                     data_summary[name] = f"{current_price:.3f} (전일대비 {change_pct:+.2f}%)"
+                elif name in ['삼성전자(KR)', 'SK하이닉스(KR)']:
+                    data_summary[name] = f"{current_price:,.0f}원 (전일대비 {change_pct:+.2f}%)"
                 else:
                     data_summary[name] = f"{current_price:,.2f} (전일대비 {change_pct:+.2f}%)"
             else:
@@ -140,7 +148,7 @@ def generate_report(market_data, news_data, today_str):
     
     prompt = f"""
     너는 월스트리트의 수석 시황 분석가이자, 나의 개인 은퇴 자산 관리 비서야.
-    다음 제공된 **정확한 실제 데이터**만을 바탕으로 지정된 '7가지 형식'에 맞춰 시황 보고서를 작성해줘. 
+    다음 제공된 **정확한 실제 데이터**만을 바탕으로 지정된 '8가지 형식'에 맞춰 시황 보고서를 작성해줘. 
     (절대 임의로 수치를 지어내지 말고, 제공된 데이터만 사용할 것!)
     
     [실제 시장 데이터]
@@ -151,32 +159,38 @@ def generate_report(market_data, news_data, today_str):
     
     아래 양식에 맞춰서 정확히 Markdown 형식으로 작성해줘:
     
-    # {today_str} 미국 증시 마감시황 보고서
+    # {today_str} 미국 증시 마감시황 및 한국 증시 영향 보고서
     
     **[보고서 헤더]**
     * 작성 시점: {time_kst}
     * 데이터 기준: {time_est} 마감 기준
     
     ## [1. 시장요약]
-    (제공된 3대 지수 종가/변동률, 10년물 국채 금리, 금, 환율 등 수치를 정확히 나열하고 등락 원인을 요약)
+    (제공된 주요 지표 수치를 정확히 나열하고 등락 원인을 요약)
     
     ## [2. 오늘의 시장 하이라이트]
-    (제공된 {len(news_data)}개 기사를 종합 분석하여 오늘 시장의 핵심 흐름과 분위기를 서술)
+    (제공된 뉴스 기사를 종합 분석하여 오늘 시장의 핵심 흐름과 분위기를 서술)
     
     ## [3. 섹터별 이슈]
-    (주요 기사 내용으로 미루어보아 AI, 반도체, 에너지, 로봇 중 특이 동향이 있는 섹터가 있다면 짚어주고 관련 전문가 또는 시장 반응 서술)
+    (AI, 반도체, 에너지, 로봇 중 특이 동향이 있는 섹터 분석)
     
-    ## [4. 내일의 일정]
-    (오늘의 흐름을 바탕으로 단기적으로 시장이 주목할 만한 주요 지표 발표나 실적 일정이 예상된다면 간략히 브리핑. 특정 데이터가 없다면 '향후 주목할 점'으로 대체 가능)
+    ## [4. 오늘의 한국 증시 관전 포인트]
+    (미국 증시 결과(특히 반도체, 빅테크, 환율 등)가 오늘 한국 증시 개장 시 어떤 영향을 줄지 예측 분석. 삼성전자(KR), SK하이닉스(KR) 등 제공된 한국 종목 데이터를 참고하여 서술)
     
-    ## [5. 오늘의 투자 인사이트]
-    (기사별 전략 요약 및 이를 종합한 단기적인 투자 제언)
+    ## [5. 미국발 주요 수혜주 및 관련주]
+    (미국 증시에서 강세를 보인 테마와 연결된 한국의 수혜 섹터와 관련 종목군을 리스트업. 예: 엔비디아 상승 시 HBM 관련주 등)
     
-    ## [6. 오늘의 한마디]
-    (투자자의 멘탈 관리를 위한 힘이 되는 조언 또는 격언)
+    ## [6. 내일의 일정]
+    (주요 지표 발표나 실적 일정 브리핑)
     
-    ## [7. 참고자료]
-    (제공된 기사의 매체명, 제목, URL을 반드시 누락 없이 모두 리스트업)
+    ## [7. 오늘의 투자 인사이트]
+    (종합적인 투자 제언 및 한국 증시 대응 전략)
+    
+    ## [8. 오늘의 한마디]
+    (투자자를 위한 격언)
+    
+    ## [9. 참고자료]
+    (제공된 기사의 매체명, 제목, URL 리스트업)
     """
     
     try:
@@ -277,6 +291,13 @@ def send_email(subject, body, attachment_path=None):
         return False
 
 if __name__ == "__main__":
+    # Windows 터미널 한글 깨짐 방지
+    import sys
+    import io
+    if sys.platform == "win32":
+        sys.stdout = io.TextIOWrapper(sys.stdout.detach(), encoding='utf-8')
+        sys.stderr = io.TextIOWrapper(sys.stderr.detach(), encoding='utf-8')
+
     is_debug = "--debug" in sys.argv
     
     is_open, today_str = check_market_open()
