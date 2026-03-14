@@ -118,8 +118,8 @@ def generate_report(market_data, news_data, today_str):
         
     genai.configure(api_key=api_key)
     
-    # 모델 설정 (최신 gemini-pro 또는 gemini-1.5-pro 사용 권장)
-    model = genai.GenerativeModel('gemini-1.5-pro-latest')
+    # 모델 설정 (최신 gemini-1.5-pro 사용)
+    model = genai.GenerativeModel('gemini-1.5-pro')
     
     # 프롬프트 구성
     market_text = "\n".join([f"- {k}: {v}" for k, v in market_data.items()])
