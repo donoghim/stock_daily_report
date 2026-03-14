@@ -29,7 +29,9 @@ def check_market_open():
     
     if schedule.empty:
         # GitHub Actions 환경변수를 확인하여 수동 실행 여부 판단
-        is_manual = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch" or not os.environ.get("GITHUB_ACTIONS")
+        # github event name에 공백 등이 붙어있을 수 있으므로 strip 처리
+        event_name = os.environ.get("GITHUB_EVENT_NAME", "").strip()
+        is_manual = (event_name == "workflow_dispatch") or not os.environ.get("GITHUB_ACTIONS")
         
         if is_manual:
             # 과거 10일 중 마지막 개장일을 찾음
