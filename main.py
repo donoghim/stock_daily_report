@@ -12,6 +12,10 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from dotenv import load_dotenv
+
+# 로컬 환경의 .env 파일에서 환경변수 불러오기 (GitHub Actions에서는 무시됨)
+load_dotenv()
 
 def check_market_open():
     """

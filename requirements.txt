@@ -5,3 +5,4 @@ pandas_market_calendars
 markdown
 pdfkit
 pytz
+python-dotenv
