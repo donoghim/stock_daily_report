@@ -28,6 +28,18 @@ def check_market_open():
     schedule = nyse.schedule(start_date=today_str, end_date=today_str)
     
     if schedule.empty:
+        # GitHub Actions 환경변수를 확인하여 수동 실행 여부 판단
+        is_manual = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch" or not os.environ.get("GITHUB_ACTIONS")
+        
+        if is_manual:
+            # 과거 10일 중 마지막 개장일을 찾음
+            past_date = (now_ny - datetime.timedelta(days=10)).strftime('%Y-%m-%d')
+            valid_days = nyse.valid_days(start_date=past_date, end_date=today_str)
+            if len(valid_days) > 0:
+                last_open_date = valid_days[-1].strftime('%Y-%m-%d')
+                print(f"[{today_str}] 휴장일이지만 수동 실행이므로 직전 개장일({last_open_date}) 기준으로 리포트를 작성합니다.")
+                return True, last_open_date
+                
         print(f"[{today_str}] 미국 증시 휴장일입니다.")
         return False, today_str
     
