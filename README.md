@@ -47,3 +47,38 @@
 - `cron: '30 21 * * *'` (UTC 기준)
 - 한국(KST) 시간으로는 9시간을 더한 **오전 6시 30분**에 매일 실행됩니다. 
 - (시간을 변경하고 싶다면 위 cron 표현식을 수정하시면 됩니다.)
+
+---
+
+## 💻 로컬 디버깅 모드 테스트 방법
+
+GitHub에 코드를 올리지 않고 내 PC에서 즉시 결과물을 확인하고 싶을 때 사용하는 방법입니다.
+
+### 1. `.env` 파일 설정
+프로젝트 최상단 폴더에 `.env` 파일을 생성하고 아래 양식에 맞게 내용을 채워 넣습니다.
+(이 파일은 `.gitignore`에 등록되어 있어 GitHub에 절대 업로드되지 않으니 안심하세요!)
+```env
+GEMINI_API_KEY="여기에_발급받은_API_키를_넣으세요"
+SENDER_EMAIL="본인_이메일@gmail.com"
+SENDER_PASSWORD="앱_비밀번호_16자리"
+RECEIVER_EMAIL="수신할_이메일_주소@naver.com"
+```
+
+### 2. 가상환경 활성화 및 패키지 설치
+```bash
+python -m venv venv
+# Windows
+.\venv\Scripts\Activate.ps1
+# Mac/Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+### 3. 디버그 모드로 스크립트 실행
+터미널에서 아래 명령어를 실행합니다.
+```bash
+python main.py --debug
+```
+- **기능**: `--debug` 옵션을 주면 번거로운 이메일 발송과 PDF 변환 작업을 생략합니다.
+- **결과**: 대신 터미널 화면에 시원하게 Markdown 텍스트로 보고서를 즉시 출력해주며, 동일 폴더 내에 `debug_report_오늘날짜.md` 파일로도 저장해 줍니다. 프롬프트를 수정하거나 테스트할 때 매우 유용합니다.
