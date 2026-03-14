@@ -102,10 +102,13 @@ def fetch_news():
     
     # 상위 5개 기사만 추출
     for entry in feed.entries[:5]:
+        # 매체명 파싱 노하우 (야후 RSS의 경우 source 태그에 주로 있음, 없으면 기본값)
+        source_name = entry.source.title if hasattr(entry, 'source') else 'Yahoo Finance'
+        
         news_items.append({
+            'source': source_name,
             'title': entry.title,
             'link': entry.link,
-            # 'summary': entry.summary if hasattr(entry, 'summary') else ''
         })
         
     return news_items
@@ -123,39 +126,57 @@ def generate_report(market_data, news_data, today_str):
     # 구글 최신 라이브러리 (google-genai) 클라이언트 생성
     client = genai.Client(api_key=api_key)
     
+    # 시간 텍스트 생성
+    kst = pytz.timezone('Asia/Seoul')
+    est = pytz.timezone('America/New_York')
+    now_utc = datetime.datetime.now(pytz.utc)
+    
+    time_kst = now_utc.astimezone(kst).strftime('%Y-%m-%d %H:%M:%S KST')
+    time_est = now_utc.astimezone(est).strftime('%Y-%m-%d %H:%M:%S EST')
+    
     # 프롬프트 구성
     market_text = "\n".join([f"- {k}: {v}" for k, v in market_data.items()])
-    news_text = "\n".join([f"- {n['title']} ({n['link']})" for n in news_data])
+    news_text = "\n".join([f"- [{n['source']}] {n['title']} (URL: {n['link']})" for n in news_data])
     
     prompt = f"""
     너는 월스트리트의 수석 시황 분석가이자, 나의 개인 은퇴 자산 관리 비서야.
-    다음 제공된 **정확한 실제 데이터**만을 바탕으로 '일일 시황 보고서'를 작성해줘. 
+    다음 제공된 **정확한 실제 데이터**만을 바탕으로 지정된 '7가지 형식'에 맞춰 시황 보고서를 작성해줘. 
     (절대 임의로 수치를 지어내지 말고, 제공된 데이터만 사용할 것!)
     
     [실제 시장 데이터]
     {market_text}
     
-    [오늘의 주요 기사]
+    [오늘의 주요 기사 피드]
     {news_text}
     
-    아래 양식에 맞춰서 Markdown 형식으로 작성해줘:
+    아래 양식에 맞춰서 정확히 Markdown 형식으로 작성해줘:
     
-    # [{today_str}] 미국 증시 마감시황 보고서
+    # {today_str} 미국 증시 마감시황 보고서
+    
+    **[보고서 헤더]**
+    * 작성 시점: {time_kst}
+    * 데이터 기준: {time_est} 마감 기준
     
     ## [1. 시장요약]
-    (제공된 시장 데이터를 바탕으로 핵심 요약)
+    (제공된 3대 지수 종가/변동률, 10년물 국채 금리, 금, 환율 등 수치를 정확히 나열하고 등락 원인을 요약)
     
     ## [2. 오늘의 시장 하이라이트]
-    (제공된 주요 기사 5개를 종합 분석)
+    (제공된 {len(news_data)}개 기사를 종합 분석하여 오늘 시장의 핵심 흐름과 분위기를 서술)
     
-    ## [3. 오늘의 투자 인사이트]
-    (전략 요약 및 단기 제언)
+    ## [3. 섹터별 이슈]
+    (주요 기사 내용으로 미루어보아 AI, 반도체, 에너지, 로봇 중 특이 동향이 있는 섹터가 있다면 짚어주고 관련 전문가 또는 시장 반응 서술)
     
-    ## [4. 오늘의 한마디]
-    (멘탈 관리 멘트)
+    ## [4. 내일의 일정]
+    (오늘의 흐름을 바탕으로 단기적으로 시장이 주목할 만한 주요 지표 발표나 실적 일정이 예상된다면 간략히 브리핑. 특정 데이터가 없다면 '향후 주목할 점'으로 대체 가능)
     
-    ## [5. 참고자료]
-    (기사 제목과 링크 리스트)
+    ## [5. 오늘의 투자 인사이트]
+    (기사별 전략 요약 및 이를 종합한 단기적인 투자 제언)
+    
+    ## [6. 오늘의 한마디]
+    (투자자의 멘탈 관리를 위한 힘이 되는 조언 또는 격언)
+    
+    ## [7. 참고자료]
+    (제공된 기사의 매체명, 제목, URL을 반드시 누락 없이 모두 리스트업)
     """
     
     try:
