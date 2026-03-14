@@ -255,15 +255,22 @@ def send_email(subject, body, attachment_path=None):
     """
     sender_email = os.environ.get("SENDER_EMAIL")
     sender_password = os.environ.get("SENDER_PASSWORD")
-    receiver_email = os.environ.get("RECEIVER_EMAIL")
-    
-    if not all([sender_email, sender_password, receiver_email]):
+    receiver_env = os.environ.get("RECEIVER_EMAIL")
+    if not all([sender_email, sender_password, receiver_env]):
         print("이메일 발송 실패: 환경변수(SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL) 누락")
+        return False
+    
+    # 쉼표로 구분된 이메일 주소들을 리스트로 변환
+    receiver_emails = [email.strip() for email in receiver_env.split(',') if email.strip()]
+    
+    if not receiver_emails:
+        print("이메일 발송 실패: 유효한 수신자 이메일 주소가 없습니다.")
         return False
         
     msg = MIMEMultipart()
     msg['From'] = sender_email or ""
-    msg['To'] = receiver_email or ""
+    # 여러 명일 경우 쉼표로 연결하여 To 헤더 작성
+    msg['To'] = ", ".join(receiver_emails)
     msg['Subject'] = subject
     
     msg.attach(MIMEText(body, 'plain', 'utf-8'))
@@ -282,9 +289,10 @@ def send_email(subject, body, attachment_path=None):
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(sender_email or "", sender_password or "")
+        # send_message는 msg['To']에 적힌 모든 수신자에게 발송합니다.
         server.send_message(msg)
         server.quit()
-        print(f"이메일 발송 성공: {receiver_email}")
+        print(f"이메일 발송 성공: {', '.join(receiver_emails)}")
         return True
     except Exception as e:
         print(f"이메일 발송 에러: {e}")
